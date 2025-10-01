@@ -6,6 +6,7 @@
     <title>🎓 ИБ-25</title>
     <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
     <style>
+        /* Ваши стили остаются без изменений */
         * {
             margin: 0;
             padding: 0;
@@ -202,6 +203,8 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         let tg = window.Telegram.WebApp;
+        console.log('Telegram Web App initialized:', tg);
+        
         tg.expand();
         tg.setHeaderColor('#667eea');
         tg.setBackgroundColor('#667eea');
@@ -269,6 +272,7 @@
                 locationStatus.textContent = 'Получаем геолокацию...';
                 
                 const location = await getLocation();
+                console.log('Location received:', location);
                 locationStatus.textContent = 'Геолокация получена!';
                 
                 const attendanceData = {
@@ -280,11 +284,18 @@
                     }
                 };
                 
+                console.log('Sending data to bot:', attendanceData);
+                
                 if (tg.HapticFeedback) {
                     tg.HapticFeedback.impactOccurred('medium');
                 }
                 
+                // Основной способ отправки
                 tg.sendData(JSON.stringify(attendanceData));
+                console.log('Data sent via sendData');
+                
+                // Альтернативный способ - закрыть Web App с данными
+                tg.close();
                 
                 showNotification('✅ Отметка принята! Геолокация отправлена');
             } catch (error) {
@@ -319,14 +330,12 @@
         }
         
         tg.ready();
+        console.log('Web App is ready');
         
         const elements = document.querySelectorAll('.fade-in');
         elements.forEach((el, index) => {
             el.style.animationDelay = `${index * 0.2}s`;
         });
-        
-        
-        console.log('Приложение инициализировано успешно');
     });
 </script>
 </body>
