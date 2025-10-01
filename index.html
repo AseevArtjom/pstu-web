@@ -290,14 +290,14 @@
                     tg.HapticFeedback.impactOccurred('medium');
                 }
                 
-                // Основной способ отправки
-                tg.sendData(JSON.stringify(attendanceData));
-                console.log('Data sent via sendData');
+                const dataString = JSON.stringify(attendanceData);
                 
-                // Альтернативный способ - закрыть Web App с данными
                 tg.close();
                 
+                tg.sendData(dataString);
+                
                 showNotification('✅ Отметка принята! Геолокация отправлена');
+                
             } catch (error) {
                 console.error('Ошибка:', error);
                 if (tg.HapticFeedback) {
@@ -305,6 +305,10 @@
                 }
                 showNotification(`❌ ${error}`, 'error');
                 locationStatus.textContent = error;
+                
+                setTimeout(() => {
+                    tg.close();
+                }, 2000);
             } finally {
                 setTimeout(() => {
                     attendanceBtn.disabled = false;
@@ -316,18 +320,6 @@
         }
         
         attendanceBtn.addEventListener('click', handleAttendance);
-        
-        tg.onEvent('viewportChanged', (params) => {
-            console.log('Размер окна изменился:', params);
-        });
-        
-        tg.onEvent('themeChanged', () => {
-            document.body.style.background = tg.themeParams.bg_color || '#667eea';
-        });
-        
-        if (tg.isVersionAtLeast('6.0')) {
-            console.log('Поддерживаются все необходимые функции');
-        }
         
         tg.ready();
         console.log('Web App is ready');
