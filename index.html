@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎓 ИБ-25</title>
+    <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --tg-theme-bg-color: #667eea;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-hint-color: #a0a0a0;
+            --tg-theme-link-color: #00d2ff;
+            --tg-theme-button-color: #00d2ff;
+            --tg-theme-button-text-color: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: var(--tg-theme-bg-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--tg-theme-text-color);
+            transition: all 0.3s ease;
+        }
+
+        .container {
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .header {
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .attendance-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 25px;
+            padding: 30px;
+            margin: 30px 0;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .attendance-title {
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            font-weight: 600;
+        }
+
+        .attendance-button {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--tg-theme-button-color);
+            border: none;
+            color: var(--tg-theme-button-text-color);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0, 210, 255, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .attendance-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: scale(0.95);
+        }
+
+        .attendance-button.loading {
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .location-status {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 25px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: 700;
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .footer {
+            margin-top: 30px;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 1000;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100%); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+
+        @media (max-width: 480px) {
+            .container { padding: 10px; }
+            .logo { font-size: 3rem; }
+            h1 { font-size: 1.8rem; }
+            .attendance-button { width: 100px; height: 100px; font-size: 1rem; }
+        }
+
+        .fade-in { animation: fadeIn 1s ease-in; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container fade-in">
+        <div class="header">
+            <div class="logo">🎓</div>
+            <p class="subtitle">Система отметки посещаемости</p>
+        </div>
+
+        <div class="attendance-section">
+            <div class="attendance-title">Отметка на паре</div>
+            <button class="attendance-button" id="attendanceBtn">
+                Отметиться
+            </button>
+            <div class="location-status" id="locationStatus">
+                Нажмите кнопку для отметки с геолокацией
+            </div>
+        </div>
+    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.setHeaderColor('#667eea');
+        tg.setBackgroundColor('#667eea');
+        
+        const attendanceBtn = document.getElementById('attendanceBtn');
+        const locationStatus = document.getElementById('locationStatus');
+        
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            notification.style.background = type === 'error' ? 'rgba(255, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.8)';
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+        
+        function getLocation() {
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    reject('Геолокация не поддерживается');
+                    return;
+                }
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        resolve({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        });
+                    },
+                    (error) => {
+                        let errorMessage = 'Ошибка получения геолокации';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = 'Доступ к геолокации запрещен';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = 'Информация о местоположении недоступна';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = 'Время ожидания геолокации истекло';
+                                break;
+                        }
+                        reject(errorMessage);
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 60000
+                    }
+                );
+            });
+        }
+        
+        async function handleAttendance() {
+            try {
+                attendanceBtn.disabled = true;
+                attendanceBtn.classList.add('loading');
+                attendanceBtn.textContent = '...';
+                locationStatus.textContent = 'Получаем геолокацию...';
+                
+                const location = await getLocation();
+                locationStatus.textContent = 'Геолокация получена!';
+                
+                const attendanceData = {
+                    action: 'mark_attendance',
+                    location: {
+                        latitude: location.latitude,
+                        longitude: location.longitude,
+                        accuracy: location.accuracy
+                    }
+                };
+                
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+                
+                tg.sendData(JSON.stringify(attendanceData));
+                
+                showNotification('✅ Отметка принята! Геолокация отправлена');
+            } catch (error) {
+                console.error('Ошибка:', error);
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.notificationOccurred('error');
+                }
+                showNotification(`❌ ${error}`, 'error');
+                locationStatus.textContent = error;
+            } finally {
+                setTimeout(() => {
+                    attendanceBtn.disabled = false;
+                    attendanceBtn.classList.remove('loading');
+                    attendanceBtn.textContent = 'Отметиться';
+                    locationStatus.textContent = 'Готово к следующей отметке';
+                }, 2000);
+            }
+        }
+        
+        attendanceBtn.addEventListener('click', handleAttendance);
+        
+        tg.onEvent('viewportChanged', (params) => {
+            console.log('Размер окна изменился:', params);
+        });
+        
+        tg.onEvent('themeChanged', () => {
+            document.body.style.background = tg.themeParams.bg_color || '#667eea';
+        });
+        
+        if (tg.isVersionAtLeast('6.0')) {
+            console.log('Поддерживаются все необходимые функции');
+        }
+        
+        tg.ready();
+        
+        const elements = document.querySelectorAll('.fade-in');
+        elements.forEach((el, index) => {
+            el.style.animationDelay = `${index * 0.2}s`;
+        });
+        
+        
+        console.log('Приложение инициализировано успешно');
+    });
+</script>
+</body>
+</html>
