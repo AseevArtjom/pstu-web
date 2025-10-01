@@ -6,7 +6,6 @@
     <title>🎓 ИБ-25</title>
     <script src="https://telegram.org/js/telegram-web-app.js?59"></script>
     <style>
-        /* Ваши стили остаются без изменений */
         * {
             margin: 0;
             padding: 0;
@@ -203,8 +202,6 @@
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         let tg = window.Telegram.WebApp;
-        console.log('Telegram Web App initialized:', tg);
-        
         tg.expand();
         tg.setHeaderColor('#667eea');
         tg.setBackgroundColor('#667eea');
@@ -272,7 +269,6 @@
                 locationStatus.textContent = 'Получаем геолокацию...';
                 
                 const location = await getLocation();
-                console.log('Location received:', location);
                 locationStatus.textContent = 'Геолокация получена!';
                 
                 const attendanceData = {
@@ -284,20 +280,13 @@
                     }
                 };
                 
-                console.log('Sending data to bot:', attendanceData);
-                
                 if (tg.HapticFeedback) {
                     tg.HapticFeedback.impactOccurred('medium');
                 }
                 
-                const dataString = JSON.stringify(attendanceData);
-                
-                tg.close();
-                
-                tg.sendData(dataString);
+                tg.sendData(JSON.stringify(attendanceData));
                 
                 showNotification('✅ Отметка принята! Геолокация отправлена');
-                
             } catch (error) {
                 console.error('Ошибка:', error);
                 if (tg.HapticFeedback) {
@@ -305,10 +294,6 @@
                 }
                 showNotification(`❌ ${error}`, 'error');
                 locationStatus.textContent = error;
-                
-                setTimeout(() => {
-                    tg.close();
-                }, 2000);
             } finally {
                 setTimeout(() => {
                     attendanceBtn.disabled = false;
@@ -321,13 +306,27 @@
         
         attendanceBtn.addEventListener('click', handleAttendance);
         
+        tg.onEvent('viewportChanged', (params) => {
+            console.log('Размер окна изменился:', params);
+        });
+        
+        tg.onEvent('themeChanged', () => {
+            document.body.style.background = tg.themeParams.bg_color || '#667eea';
+        });
+        
+        if (tg.isVersionAtLeast('6.0')) {
+            console.log('Поддерживаются все необходимые функции');
+        }
+        
         tg.ready();
-        console.log('Web App is ready');
         
         const elements = document.querySelectorAll('.fade-in');
         elements.forEach((el, index) => {
             el.style.animationDelay = `${index * 0.2}s`;
         });
+        
+        
+        console.log('Приложение инициализировано успешно');
     });
 </script>
 </body>
